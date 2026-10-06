@@ -16,18 +16,21 @@
 <button type="submit">Upload</button>
 </form>
 <ul id="status"></ul>
+<button type="button" id="retry" hidden>Retry failed</button>
 <script>
 const form = document.querySelector("form");
 const status = document.getElementById("status");
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const button = form.querySelector("button");
-  const input = form.elements.file;
-  const files = [...input.files];
+const retry = document.getElementById("retry");
+const button = form.querySelector("button");
+const input = form.elements.file;
+let failed = [];
+
+async function uploadAll(files) {
   button.disabled = true;
   input.disabled = true;
+  retry.hidden = true;
   status.replaceChildren();
-  let allOk = true;
+  failed = [];
   try {
     for (const file of files) {
       const line = document.createElement("li");
@@ -38,18 +41,25 @@ form.addEventListener("submit", async (event) => {
       try {
         const response = await fetch(form.action, { method: "POST", body });
         line.textContent = file.name + ": " + await response.text();
-        if (!response.ok) allOk = false;
-      } catch (err) {
-        line.textContent = file.name + ": failed " + err.message;
-        allOk = false;
+        if (!response.ok) failed.push(file);
+      } catch {
+        line.textContent = file.name + ": failed, can't reach the laptop. Is it awake and is PhotoDrop running?";
+        failed.push(file);
       }
     }
-    if (allOk) form.reset();
+    if (failed.length === 0) form.reset();
   } finally {
     button.disabled = false;
     input.disabled = false;
+    retry.hidden = failed.length === 0;
   }
+}
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  uploadAll([...input.files]);
 });
+retry.addEventListener("click", () => uploadAll(failed));
 </script>
 </body>
 </html>

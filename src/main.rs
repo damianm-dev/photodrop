@@ -151,6 +151,7 @@ mod tests {
         assert!(body.contains(r#"enctype="multipart/form-data""#));
         assert!(body.contains(r#"name="file""#));
         assert!(body.contains(r#"name="file" multiple"#));
+        assert!(body.contains(r#"id="retry""#));
     }
 
     #[tokio::test]
