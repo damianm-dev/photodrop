@@ -7,9 +7,13 @@
 <style>
 #status { list-style: none; padding: 0; }
 #status li { padding: 8px 0; border-bottom: 1px solid #ccc; overflow-wrap: anywhere; }
+#health { position: fixed; top: 8px; right: 8px; padding: 4px 10px; border-radius: 12px; color: #fff; background: #888; font: 14px sans-serif; }
+#health.online { background: #2a7d2a; }
+#health.offline { background: #b02a2a; }
 </style>
 </head>
 <body>
+<div id="health">checking...</div>
 <h1>PhotoDrop</h1>
 <form method="post" action="/upload" enctype="multipart/form-data">
 <input type="file" name="file" multiple>
@@ -60,6 +64,22 @@ form.addEventListener("submit", (event) => {
   uploadAll([...input.files]);
 });
 retry.addEventListener("click", () => uploadAll(failed));
+
+const health = document.getElementById("health");
+async function checkHealth() {
+  let ok = false;
+  try {
+    const response = await fetch("/", { method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(3000) });
+    ok = response.ok;
+  } catch {}
+  health.textContent = ok ? "online" : "offline";
+  health.className = ok ? "online" : "offline";
+}
+checkHealth();
+setInterval(checkHealth, 5000);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") checkHealth();
+});
 </script>
 </body>
 </html>

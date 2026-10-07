@@ -136,6 +136,16 @@ mod tests {
     use tower::ServiceExt;
 
     #[tokio::test]
+    async fn index_answers_head_for_health_check() {
+        let tmp = tempfile::tempdir().unwrap();
+        let response = app(tmp.path().to_path_buf())
+            .oneshot(Request::head("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
     async fn index_serves_upload_form() {
         let tmp = tempfile::tempdir().unwrap();
         let response = app(tmp.path().to_path_buf())
@@ -152,6 +162,7 @@ mod tests {
         assert!(body.contains(r#"name="file""#));
         assert!(body.contains(r#"name="file" multiple"#));
         assert!(body.contains(r#"id="retry""#));
+        assert!(body.contains(r#"id="health""#));
     }
 
     #[tokio::test]
